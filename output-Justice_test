@@ -1,0 +1,42 @@
+
+Token list:
+
+Token type: IDENTIFIER
+Token:      function
+
+Token type: IDENTIFIER
+Token:      int
+
+Token type: IDENTIFIER
+Token:      hexdigit2int
+
+Token type: LEFT_PARENTHESIS
+Token:      (
+
+Token type: IDENTIFIER
+Token:      char
+
+Token type: IDENTIFIER
+Token:      hex_digit
+
+Token type: RIGHT_PARENTHESIS
+Token:      )
+
+Token type: LEFT_BRACE
+Token:      {
+
+Token type: IDENTIFIER
+Token:      int
+
+Token type: IDENTIFIER
+Token:      i,
+
+Token type: IDENTIFIER
+Token:      digit
+
+Token type: SEMICOLON
+Token:      ;
+
+Token type: Right_BRACE
+Token:      }
+
