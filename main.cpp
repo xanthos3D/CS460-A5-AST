@@ -7,19 +7,16 @@ Anthony Manese
 
 how to compile program through terminal
 1. g++ main.cpp Token.cpp Tokenizer.cpp Parser.cpp CST.cpp SymbolTable.cpp
-2. ./a.out programming_assignment_1-test_file_1.c
+2. ./a.out programming_assignment_5-test_file_1.c
 
 how to run makefile
 1.  make
-2.  ./AST programming_assignment_4-test_file_1.c
+2.  ./AST programming_assignment_5-test_file_1.c
 
 description:
-Write a program in C or C++ that creates a symbol table (a linked list) 
-of all the defined variables (including their type and scope) and the names
-of all functions and procedures. Functions and procedures may also have 
-an input parameter list of variables and types. These too should be added
-(with appropriate scope) to the symbol table. Lastly, functions have a 
-return datatype which must be noted in the symbol table as well.
+Write a program in C or C++ that creates an Abstract Syntax Tree (AST)
+ based on the Concrete Syntax Tree (CST) you created in programming
+  assignment 3
 *********************************************************************** */
 #include <iostream>
 #include <fstream>
