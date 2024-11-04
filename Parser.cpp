@@ -1416,13 +1416,13 @@ void Parser::expect(const std::string& expected_value) {
 
 }
 
-
-
-
-
-
 void Parser::PrintSymbolTableLL( ){
     symbol_table_list.PrintSymbolTableList();
+}
+
+
+void Parser::convertToAST(){
+    cst->cstToAst();
 }
 
 

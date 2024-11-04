@@ -65,6 +65,7 @@ public:
     void double_quoted_string();
     void printTree() { cst->printTree(); }
     void PrintSymbolTableLL();
+    void convertToAST();
 
     //function to get get our cst tree with out tokens.
     CST* parse();

@@ -3,8 +3,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include "Token.hpp"
 #include "CSTNode.hpp"
+
 
 //Concrete syntax tree, this is the tree object which we want to return
 class CST {
@@ -16,7 +18,10 @@ public:
     void addChild(CSTNode* nodeToken,Token token);
     void addSibling(CSTNode* nodeToken, Token token);
     void printTree();   //Breadth First Traversal
+    void cstToAst();   //Breadth First Traversal
+    void RemoveElement();
     CSTNode* getRoot() { return root; }
+    std::vector<Token> yardAlgorithm (std::vector<Token>& infix);
 
 private:
     //object made of one cst node which connects to the other nodes apart of this data structure
