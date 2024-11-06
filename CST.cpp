@@ -182,10 +182,30 @@ void CST::cstToAst(){
                 addChild(astRoot,token);
 
                 //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
 
+                //fill important tokens iwth the tokens we care about
+                for(int i = 1;i < lineByLine.size();i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
                 //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
 
                 //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
                 lineByLine.clear();
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "else" ){
 
@@ -230,9 +250,67 @@ void CST::cstToAst(){
                 addChild(astRoot,token);
 
                 //insert string plus the variables associated with that print f statement
+                //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
+
+                //fill important tokens iwth the tokens we care about
+                for(int i = 1;i < lineByLine.size();i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
 
                 lineByLine.clear();
             //if we find a brace
+            }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "return" ) {
+
+                //insert "RETURN" token
+                std::cout << "found RETURN with string: " << lineByLine.front().getTokenString() << std::endl;
+                Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
+                token.setIdentifier("RETURN");
+                addChild(astRoot, token);
+
+                //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
+
+                //fill important tokens iwth the tokens we care about
+                for(int i = 1;i < lineByLine.size();i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
+                lineByLine.clear();
             }else if(lineByLine.front().isLBrace()){
 
                 //insert "BEGIN BLOCK" token, and progress to next line.
@@ -270,17 +348,7 @@ void CST::cstToAst(){
 
                     //fill important tokens iwth the tokens we care about
                     for(int i = 0;i < lineByLine.size();i++){
-                        if(lineByLine[i].isLParen() ||
-                        lineByLine[i].isRParen() ||
-                        lineByLine[i].isModulo() ||
-                        lineByLine[i].isPlus() ||
-                        lineByLine[i].isMinus() ||
-                        lineByLine[i].isAsterisk() ||
-                        lineByLine[i].isDivide() ||
-                        lineByLine[i].isInt() ||
-                        lineByLine[i].isIdentifier()||
-                        lineByLine[i].isAssignmentOperator()
-                        ){
+                        if(tokenOfInterest(lineByLine[i])){
                             std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
                             importantTokens.push_back(lineByLine[i]);
                         }
@@ -334,7 +402,7 @@ void CST::cstToAst(){
 
     root = astRoot;
 
-    std::cout<<"Sucessfully Created AST ------------------------------------------------------"<<std::endl;
+    std::cout<<"Successfully Created AST ------------------------------------------------------"<<std::endl;
 
 }
 
@@ -349,12 +417,17 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
 
     std::vector<Token> postfix;
     std::stack<Token> stack;
+    Token assignmentOp(0,0);
+    bool isAssignment = false;
     bool finished = false;
 
     //foreach token in token list
     for(int i = 0; i < infix.size(); i++){
-        if ((infix[i].isInt()) || (infix[i].isIdentifier()) || (infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||
-            (infix[i].isString()) || (infix[i].isLBracket()) || (infix[i].isRBracket())){
+        if (infix[i].isAssignmentOperator()){
+            isAssignment = true;
+            assignmentOp = infix[i];
+        }else if ((infix[i].isInt())    || (infix[i].isIdentifier()) || (infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||
+            (infix[i].isString()) || (infix[i].isLBracket())   || (infix[i].isRBracket())){
             //display token
             std::cout<<"here!"<<std::endl;
             infix[i].print();
@@ -385,10 +458,10 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
                         }
                     }
                 }else{
-                    if ((infix[i].isBoolE())      || (infix[i].isBoolNE())             || (infix[i].isBoolLT())   || (infix[i].isBoolGT()) ||
+                    if ((infix[i].isBoolE())   || (infix[i].isBoolNE())  || (infix[i].isBoolLT())  || (infix[i].isBoolGT())   ||
                         (infix[i].isBoolLTE()) || (infix[i].isBoolGTE()) || (infix[i].isBoolAnd()) || (infix[i].isBoolOr())   ||
-                        (infix[i].isBoolNot())        || (infix[i].isPlus())                  || (infix[i].isMinus())       || (infix[i].isAsterisk())     ||
-                        (infix[i].isDivide())             || (infix[i].isModulo())|| (infix[i].isAssignmentOperator())){
+                        (infix[i].isBoolNot()) || (infix[i].isPlus())    || (infix[i].isMinus())   || (infix[i].isAsterisk()) ||
+                        (infix[i].isDivide())  || (infix[i].isModulo())  || (infix[i].isAssignmentOperator())){
                         if (stack.empty()){
                             //push token on stack
                             stack.push(infix[i]);
@@ -449,8 +522,8 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
                                                 if (!stack.empty())
                                                 {
                                                     if ((stack.top().isBoolNot()) || (stack.top().isAsterisk()) ||
-                                                        (stack.top().isDivide())      || (stack.top().isModulo())   ||
-                                                        (stack.top().isPlus())        || (stack.top().isMinus()) || (stack.top().isAssignmentOperator()))
+                                                        (stack.top().isDivide())  || (stack.top().isModulo())   ||
+                                                        (stack.top().isPlus())    || (stack.top().isMinus())    || (stack.top().isAssignmentOperator()))
                                                     {
                                                         //display token at top of stack
                                                         stack.top().print();
@@ -468,20 +541,20 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
                                                 }
                                             }
                                         }else{
-                                            if ((infix[i].isBoolE())      || (infix[i].isBoolNE()) || (infix[i].isBoolLT()) || (infix[i].isBoolGT()) ||
+                                            if ((infix[i].isBoolE())   || (infix[i].isBoolNE()) || (infix[i].isBoolLT()) || (infix[i].isBoolGT()) ||
                                                 (infix[i].isBoolLTE()) || (infix[i].isBoolGTE()))
                                             {
                                                 finished = false;
                                                 while (!finished){
                                                     if (!stack.empty())
                                                     {
-                                                        if ((stack.top().isBoolNot())        || (stack.top().isAsterisk())              ||
-                                                            (stack.top().isDivide())             || (stack.top().isModulo())                ||
-                                                            (stack.top().isPlus())               || (stack.top().isMinus())                 ||
+                                                        if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+                                                            (stack.top().isDivide())             || (stack.top().isModulo())   ||
+                                                            (stack.top().isPlus())               || (stack.top().isMinus())    ||
                                                             (stack.top().isAssignmentOperator()) ||
-                                                            (stack.top().isBoolE())      || (stack.top().isBoolNE())             ||
-                                                            (stack.top().isBoolLT())          || (stack.top().isBoolGT())          ||
-                                                            (stack.top().isBoolLTE()) || (stack.top().isBoolGTE()) ||
+                                                            (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+                                                            (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+                                                            (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
                                                             (stack.top().isBoolNE()))
                                                         {
                                                             //display token at top of stack
@@ -504,13 +577,13 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
                                                     finished = false;
                                                     while (!finished){
                                                         if (!stack.empty()){
-                                                            if ((stack.top().isBoolNot())        || (stack.top().isAsterisk())              ||
-                                                                (stack.top().isDivide())             || (stack.top().isModulo())                ||
-                                                                (stack.top().isPlus())               || (stack.top().isMinus())                 ||
+                                                            if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+                                                                (stack.top().isDivide())             || (stack.top().isModulo())   ||
+                                                                (stack.top().isPlus())               || (stack.top().isMinus())    ||
                                                                 (stack.top().isAssignmentOperator()) ||
-                                                                (stack.top().isBoolE())      || (stack.top().isBoolNE())             ||
-                                                                (stack.top().isBoolLT())          || (stack.top().isBoolGT())          ||
-                                                                (stack.top().isBoolLTE()) || (stack.top().isBoolGTE()) ||
+                                                                (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+                                                                (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+                                                                (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
                                                                 (stack.top().isBoolNE()))
                                                             {
                                                                 //display token at top of stack
@@ -536,13 +609,13 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
                                                         {
                                                             if (!stack.empty())
                                                             {
-                                                                if ((stack.top().isBoolNot())        || (stack.top().isAsterisk())              ||
-                                                                    (stack.top().isDivide())             || (stack.top().isModulo())                ||
-                                                                    (stack.top().isPlus())               || (stack.top().isMinus())                 ||
+                                                                if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+                                                                    (stack.top().isDivide())             || (stack.top().isModulo())   ||
+                                                                    (stack.top().isPlus())               || (stack.top().isMinus())    ||
                                                                     (stack.top().isAssignmentOperator()) ||
-                                                                    (stack.top().isBoolE())      || (stack.top().isBoolNE())             ||
-                                                                    (stack.top().isBoolLT())          || (stack.top().isBoolGT())          ||
-                                                                    (stack.top().isBoolLTE()) || (stack.top().isBoolGTE()) ||
+                                                                    (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+                                                                    (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+                                                                    (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
                                                                     (stack.top().isBoolNE()))
                                                                 {
                                                                     //display token at top of stack
@@ -581,5 +654,32 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
         stack.pop();
     }
 
+    if (isAssignment)
+        postfix.push_back(assignmentOp);
+
     return postfix;
+}
+
+/** **************************************************************************************
+//function
+@pre:
+@post:
+ *****************************************************************************************/
+bool CST::tokenOfInterest (Token check){
+    if(check.isLParen()     ||      check.isRParen()     ||
+       check.isModulo()     ||      check.isPlus()       ||
+       check.isMinus()      ||      check.isAsterisk()   ||
+       check.isDivide()     ||      check.isInt()        ||
+       check.isIdentifier() ||      check.isBoolNE()     ||
+       check.isBoolNot()    ||      check.isBoolE()      ||
+       check.isBoolGT()     ||      check.isBoolGTE()    ||
+       check.isBoolLT()     ||      check.isBoolLTE()    ||
+       check.isBoolAnd()    ||      check.isBoolOr()     ||
+       check.isBoolFalse()  ||      check.isBoolTrue()   ||
+       check.isString()     ||
+       check.isAssignmentOperator()
+       ){
+        return true;
+    }
+    return false;
 }
