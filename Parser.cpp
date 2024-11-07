@@ -622,13 +622,14 @@ void Parser::iteration_statement() {
         //std::cout<<"entering increment expression statement for for loop"<<std::endl;
         expression();
         expect(")");
+        inForLoop = false;
         if (tokenVector[index].isLBrace()) {
             block_statement();
         } else {
             statement();
         }
         //set for loop to false, so we handle semicolons normally after this.
-        inForLoop = false;
+      //  inForLoop = false;
     } else if (tokenVector[index].getTokenString() == "while" ){
         expect(tokenVector[index].getTokenString());
         expect("(");

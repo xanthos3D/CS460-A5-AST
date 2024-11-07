@@ -134,7 +134,7 @@ void CST::cstToAst(){
     q.push( root );
 
     //traverse through our queue
-    while ( !q.empty() ) {
+    while ( !q.empty() /*|| !lineByLine.empty()*/) {
 
         CSTNode* current = q.front();
 
@@ -149,7 +149,7 @@ void CST::cstToAst(){
             std::cout<<std::endl;
 
             //if the front of our vector is a identifier with the 
-            if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "function" ){
+            if(lineByLine.front().isIdentifier() && (lineByLine.front().getTokenString() == "function" || lineByLine.front().getTokenString() == "procedure")){
 
                 //insert "DECLARATION" token, and progress to next line.
                 std::cout<<"found DECLARATION with string: "<<lineByLine.front().getTokenString() <<std::endl;
@@ -159,11 +159,12 @@ void CST::cstToAst(){
 
                 lineByLine.clear();
             //if we find a datatype as a identifier
-            }else if(lineByLine.front().isIdentifier() && (lineByLine.front().getTokenString() == "int" || lineByLine.front().getTokenString() == "string"|| lineByLine.front().getTokenString() == "char" )){
+            }else if(lineByLine.front().isIdentifier() && (lineByLine.front().getTokenString() == "int" || lineByLine.front().getTokenString() == "string"|| lineByLine.front().getTokenString() == "char"
+                        || lineByLine.front().getTokenString() == "bool")){
 
                 //insert "DECLARATION" token, and progress to next line.
                 for(int i = 0;i < lineByLine.size();i++){
-                    if(lineByLine[i].isIdentifier() && (lineByLine[i].getTokenString() == "int" || lineByLine[i].getTokenString() == "string"||lineByLine[i].getTokenString() == "char" )){
+                    if(lineByLine[i].isIdentifier() && (lineByLine[i].getTokenString() == "int" || lineByLine[i].getTokenString() == "string"||lineByLine[i].getTokenString() == "char" )|| lineByLine[i].isComma() || lineByLine[i].getTokenString() == "bool"){
                         std::cout<<"found DECLARATION with string: "<<lineByLine[i].getTokenString() <<std::endl;
                         Token token(lineByLine[i].getLineNum(), lineByLine[i].getCharPos());
                         token.setIdentifier("DECLARATION");
@@ -218,7 +219,7 @@ void CST::cstToAst(){
 
                 lineByLine.clear();
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "for" ){
-
+                int keepTrack;
                 //loop through to get each foor loop part note, each part goes down as a left child of the previous statement.
 
                 //insert "FOR EXPRESSION 1" token with the postfix operations after it.
@@ -226,6 +227,35 @@ void CST::cstToAst(){
                 Token token1(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
                 token1.setIdentifier("FOR EXPRESSION 1");
                 addChild(astRoot,token1);
+                //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
+
+                //fill important tokens iwth the tokens we care about
+                for(int i = 2;i < lineByLine.size();i++){
+                    keepTrack = i;
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                    if(lineByLine[i].isSemicolon())
+                        break;
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
+                //lineByLine.clear();
 
                 //insert "FOR EXPRESSION 2" token with the postfix operations after it.
                 std::cout<<"found FOR EXPRESSION 2 with string: "<<lineByLine.front().getTokenString() <<std::endl;
@@ -233,20 +263,100 @@ void CST::cstToAst(){
                 token2.setIdentifier("FOR EXPRESSION 2");
                 addChild(astRoot,token2);
 
+                importantTokens.clear();
+                //fill important tokens iwth the tokens we care about
+                for(int i = keepTrack + 1;i < lineByLine.size();i++){
+                    keepTrack = i;
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                    if(lineByLine[i].isSemicolon())
+                        break;
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
                 //insert "FOR EXPRESSION 3" token with the postfix operations after it.
                 std::cout<<"found FOR EXPRESSION 3 with string: "<<lineByLine.front().getTokenString() <<std::endl;
                 Token token3(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
                 token3.setIdentifier("FOR EXPRESSION 3");
                 addChild(astRoot,token3);
 
+                importantTokens.clear();
+                //fill important tokens iwth the tokens we care about
+                for(int i = keepTrack + 1;i < lineByLine.size() - 1;i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
+                lineByLine.clear();
+            }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "while" ){
+
+                //insert "WHILE" token
+                std::cout<<"found WHILE with string: "<<lineByLine.front().getTokenString() <<std::endl;
+                Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
+                token.setIdentifier("WHILE");
+                addChild(astRoot,token);
+
+                //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
+
+                //fill important tokens iwth the tokens we care about
+                for(int i = 1;i < lineByLine.size();i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
 
                 lineByLine.clear();
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "printf" ){
 
                 //insert "PRINTF" token
-                std::cout<<"found FOR PRINTF with string: "<<lineByLine.front().getTokenString() <<std::endl;
+                std::cout<<"found PRINTF with string: "<<lineByLine.front().getTokenString() <<std::endl;
                 Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
-                token.setIdentifier("FOR PRINTF");
+                token.setIdentifier("PRINTF");
                 addChild(astRoot,token);
 
                 //insert string plus the variables associated with that print f statement
@@ -276,7 +386,7 @@ void CST::cstToAst(){
                 }
 
                 lineByLine.clear();
-            //if we find a brace
+
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "return" ) {
 
                 //insert "RETURN" token
@@ -311,6 +421,42 @@ void CST::cstToAst(){
                 }
 
                 lineByLine.clear();
+                //if we find a brace
+            }else if(lineByLine.front().isIdentifier() && lineByLine[1].isLParen() ) {
+
+                //insert "CALL" token
+                std::cout << "found CALL with string: " << lineByLine.front().getTokenString() << std::endl;
+                Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
+                token.setIdentifier("CALL");
+                addChild(astRoot, token);
+
+                //then look through the rest of this line to get the relivant boolean operations
+                //temp vector to fill with assignment variables we care about
+                std::vector<Token> importantTokens;
+
+                //fill important tokens iwth the tokens we care about
+                for(int i = 0;i < lineByLine.size();i++){
+                    if(tokenOfInterest(lineByLine[i])){
+                        std::cout<<"adding token to important tokens: "<<lineByLine[i].getTokenString() <<std::endl;
+                        importantTokens.push_back(lineByLine[i]);
+                    }
+                }
+
+                //test print out
+                for(int i = 0;i < importantTokens.size();i++){
+                    std::cout<<importantTokens[i].getTokenString()<<"->";
+                }
+                //apply yards algorithm on those operations
+                std::vector<Token> postfix = yardAlgorithm(importantTokens);
+
+                //insert them into our ast and move to next line.
+                for(int i = 0;i < postfix.size();i++) {
+                    std::cout << postfix[i].getTokenString() << "->";
+                    addSibling(astRoot, postfix[i]);
+                }
+
+                lineByLine.clear();
+                //if we find a brace
             }else if(lineByLine.front().isLBrace()){
 
                 //insert "BEGIN BLOCK" token, and progress to next line.
@@ -334,8 +480,8 @@ void CST::cstToAst(){
             }else if(lineByLine.front().isIdentifier()){
 
                 //check next element in the vector to see if its a equals 
-                //check next element in the vector to see if its a equals 
-                if(lineByLine[1].isAssignmentOperator()){
+                //check next element in the vector to see if its a equals for an array as well
+                if(lineByLine[1].isAssignmentOperator() || lineByLine[4].isAssignmentOperator()){
 
                     //make start to assignment
                     std::cout<<"found ASSIGNMENT with string: "<<lineByLine.front().getTokenString() <<std::endl;
@@ -390,12 +536,23 @@ void CST::cstToAst(){
             lineByLine.push_back(current->getToken());
             q.push( current->getLeft() );
         }
-        if ( current->getRight() != nullptr ){
+        else if ( current->getRight() != nullptr ){
 
             // add our elements to our vector 
             lineByLine.push_back(current->getToken());
 
             q.push( current->getRight() );
+        } //run the end block code here again if we are at the end of the program we are reading because
+          //queue will become empty and won't be able to go through the while loop again
+        else if ( current->getToken().isRBrace()){
+            //insert "END BLOCK" token, and progress to next line.
+            std::cout<<"found END BLOCK with string: "<<lineByLine.front().getTokenString() <<std::endl;
+            Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
+            token.setIdentifier("END BLOCK");
+
+            lineByLine.clear();
+
+            addChild(astRoot,token);
         }
     }
     //std::cout <<std::endl;
@@ -683,3 +840,285 @@ bool CST::tokenOfInterest (Token check){
     }
     return false;
 }
+
+///** **************************************************************************************
+////function to take a infix expression and conver it to postfix
+//@pre: takes a vector of tokens in infix
+//@post: returns a vector with token in infix
+// *****************************************************************************************/
+//std::vector<Token> CST::yardAlgorithm2 (std::vector<Token>& infix){
+//
+//    std::vector<Token> postfix;
+//    std::stack<Token> stack;
+//    Token assignmentOp(0,0);
+//    bool isAssignment = false;
+//    bool finished = false;
+//
+//    //foreach token in token list
+//    for(int i = 0; i < infix.size(); i++){
+//        if (infix[i].isAssignmentOperator()){
+//            isAssignment = true;
+//            assignmentOp = infix[i];
+//        }else if ((infix[i].isInt())    || (infix[i].isIdentifier()) || (infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||
+//                  (infix[i].isString()) || (infix[i].isLBracket())   || (infix[i].isRBracket())){
+//            //display token
+//            std::cout<<"here!"<<std::endl;
+//            infix[i].print();
+//            postfix.push_back(infix[i]);
+//
+//        }else{
+//            if (infix[i].isLParen())
+//            {
+//                //push token on stack
+//                stack.push(infix[i]);
+//
+//            }else{
+//
+//                if (infix[i].isRParen()){
+//
+//                    while (!stack.top().isLParen()){
+//                        //display token at top of stack
+//                        stack.top().print();
+//                        postfix.push_back(stack.top());
+//                        //pop stack
+//                        stack.pop();
+//
+//                    }
+//                    stack.pop();
+//                }else{
+//                    if ((infix[i].isPlus())    || (infix[i].isMinus())   || (infix[i].isAsterisk()) ||
+//                        (infix[i].isDivide())  || (infix[i].isModulo())  || (infix[i].isAssignmentOperator())){
+//                        if (stack.empty()){
+//                            //push token on stack
+//                            stack.push(infix[i]);
+//                        }else{
+//                            if (infix[i].isPlus() || infix[i].isMinus())
+//                            {
+//                                finished = false;
+//                                while (!finished)
+//                                {
+//                                    if (!stack.empty())
+//                                    {
+//                                        if (stack.top().isPlus() || stack.top().isMinus() ||
+//                                            stack.top().isAsterisk() || stack.top().isDivide() ||
+//                                            stack.top().isModulo())
+//                                        {
+//                                            //display token at top of stack
+//                                            stack.top().print();
+//                                            postfix.push_back(stack.top());
+//                                            //pop stack
+//                                            stack.pop();
+//                                        }
+//                                        else
+//                                        {
+//                                            stack.push(infix[i]);
+//                                            finished = true;
+//                                        }
+//                                    }
+//                                    else
+//                                    {
+//                                        stack.push(infix[i]);
+//                                        finished = true;
+//                                    }
+//                                }
+//                            }
+//                            else
+//                            {
+//                                if (infix[i].isAsterisk() || infix[i].isDivide() || infix[i].isModulo())
+//                                {
+//                                    jkjkjkjjkjk
+//                                }
+//                            }
+//                            //top of stack token == LEFT PARENTHESIS
+//                            if (infix[i].isLParen()){
+//                                stack.push(infix[i]);
+//                            }else{
+//                                //token == BOOLEAN_NOT
+//                                if (infix[i].isBoolNot())
+//                                {
+//                                    finished = false;
+//
+//                                    while (!finished){
+//                                        if (!stack.empty()){
+//                                            //top of stack token == BOOLEAN NOT
+//                                            if (stack.top().isBoolNot()){
+//                                                //display token at top of stack
+//                                                stack.top().print();
+//                                                postfix.push_back(stack.top());
+//                                                //pop stack
+//                                                stack.pop();
+//                                            }else{
+//                                                //push token on stack
+//                                                stack.push(infix[i]);
+//                                                finished = true;
+//                                            }
+//                                        }else{
+//                                            //push token on stack
+//                                            finished = true;
+//                                        }
+//                                    }
+//                                }else{
+//                                    if ((infix[i].isAsterisk()) || (infix[i].isDivide()) || (infix[i].isModulo()) || (infix[i].isAssignmentOperator()) ){
+//                                        finished = false;
+//                                        while (!finished){
+//                                            if (!stack.empty()){
+//                                                if ((stack.top().isBoolNot())  || (stack.top().isAsterisk()) || (stack.top().isDivide()) || (stack.top().isModulo())|| (stack.top().isAssignmentOperator())){
+//                                                    //display token at top of stack
+//                                                    stack.top().print();
+//                                                    postfix.push_back(stack.top());
+//                                                    stack.pop();
+//                                                }else{
+//                                                    //push token on stack
+//                                                    stack.push(infix[i]);
+//                                                    finished = true;
+//                                                }
+//                                            }else{
+//                                                //push token on stack
+//                                                stack.push(infix[i]);
+//                                                finished = true;
+//                                            }
+//                                        }
+//                                    }else{
+//                                        if ((infix[i].isPlus()) || (infix[i].isMinus())){
+//                                            finished = false;
+//                                            while (!finished){
+//                                                if (!stack.empty())
+//                                                {
+//                                                    if ((stack.top().isBoolNot()) || (stack.top().isAsterisk()) ||
+//                                                        (stack.top().isDivide())  || (stack.top().isModulo())   ||
+//                                                        (stack.top().isPlus())    || (stack.top().isMinus())    || (stack.top().isAssignmentOperator()))
+//                                                    {
+//                                                        //display token at top of stack
+//                                                        stack.top().print();
+//                                                        postfix.push_back(stack.top());
+//                                                        stack.pop();
+//                                                    }else{
+//                                                        //push token on stack
+//                                                        stack.push(infix[i]);
+//                                                        finished = true;
+//                                                    }
+//                                                }else{
+//                                                    //push token on stack
+//                                                    stack.push(infix[i]);
+//                                                    finished = true;
+//                                                }
+//                                            }
+//                                        }else{
+//                                            if ((infix[i].isBoolE())   || (infix[i].isBoolNE()) || (infix[i].isBoolLT()) || (infix[i].isBoolGT()) ||
+//                                                (infix[i].isBoolLTE()) || (infix[i].isBoolGTE()))
+//                                            {
+//                                                finished = false;
+//                                                while (!finished){
+//                                                    if (!stack.empty())
+//                                                    {
+//                                                        if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+//                                                            (stack.top().isDivide())             || (stack.top().isModulo())   ||
+//                                                            (stack.top().isPlus())               || (stack.top().isMinus())    ||
+//                                                            (stack.top().isAssignmentOperator()) ||
+//                                                            (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+//                                                            (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+//                                                            (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
+//                                                            (stack.top().isBoolNE()))
+//                                                        {
+//                                                            //display token at top of stack
+//                                                            stack.top().print();
+//                                                            postfix.push_back(stack.top());
+//                                                            stack.pop();
+//                                                        }else{
+//                                                            //push token on stack
+//                                                            stack.push(infix[i]);
+//                                                            finished = true;
+//                                                        }
+//                                                    }else{
+//                                                        //push token on stack
+//                                                        stack.push(infix[i]);
+//                                                        finished = true;
+//                                                    }
+//                                                }
+//                                            }else{
+//                                                if (infix[i].isBoolAnd()){
+//                                                    finished = false;
+//                                                    while (!finished){
+//                                                        if (!stack.empty()){
+//                                                            if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+//                                                                (stack.top().isDivide())             || (stack.top().isModulo())   ||
+//                                                                (stack.top().isPlus())               || (stack.top().isMinus())    ||
+//                                                                (stack.top().isAssignmentOperator()) ||
+//                                                                (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+//                                                                (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+//                                                                (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
+//                                                                (stack.top().isBoolNE()))
+//                                                            {
+//                                                                //display token at top of stack
+//                                                                stack.top().print();
+//                                                                postfix.push_back(stack.top());
+//                                                                stack.pop();
+//                                                            }else{
+//                                                                //push token on stack
+//                                                                stack.push(infix[i]);
+//                                                                finished = true;
+//                                                            }
+//                                                        }else{
+//                                                            //push token on stack
+//                                                            stack.push(infix[i]);
+//                                                            finished = true;
+//                                                        }
+//                                                    }
+//                                                }else{
+//                                                    if (infix[i].isBoolOr())
+//                                                    {
+//                                                        finished = false;
+//                                                        while (!finished)
+//                                                        {
+//                                                            if (!stack.empty())
+//                                                            {
+//                                                                if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
+//                                                                    (stack.top().isDivide())             || (stack.top().isModulo())   ||
+//                                                                    (stack.top().isPlus())               || (stack.top().isMinus())    ||
+//                                                                    (stack.top().isAssignmentOperator()) ||
+//                                                                    (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
+//                                                                    (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
+//                                                                    (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
+//                                                                    (stack.top().isBoolNE()))
+//                                                                {
+//                                                                    //display token at top of stack
+//                                                                    stack.top().print();
+//                                                                    postfix.push_back(stack.top());
+//                                                                    stack.pop();
+//                                                                }else{
+//                                                                    //push token on stack
+//                                                                    stack.push(infix[i]);
+//                                                                    finished = true;
+//                                                                }
+//                                                            }else{
+//                                                                //push token on stack
+//                                                                stack.push(infix[i]);
+//                                                                finished = true;
+//                                                            }
+//                                                        }
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    while (!stack.empty()){
+//        //display token at top of stack
+//        stack.top().print();
+//        postfix.push_back(stack.top());
+//        stack.pop();
+//    }
+//
+//    if (isAssignment)
+//        postfix.push_back(assignmentOp);
+//
+//    return postfix;
+//}
