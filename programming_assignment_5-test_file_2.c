@@ -28,7 +28,7 @@ function int hexdigit2int (char hex_digit)
     {
       if ((hex_digit >= 'A') && (hex_digit <= 'F'))
       {
-        digit = hex_digit - 'A' + 10; 
+        digit = hex_digit - 'A' + 10;
       }
     }
   }
@@ -40,7 +40,7 @@ function int hexdigit2int (char hex_digit)
 procedure main (void)
 {
   char hexnum[9];
-  int i, digit, number; 
+  int i, digit, number;
 
   number = 0;
   hexnum = "feed\x0";

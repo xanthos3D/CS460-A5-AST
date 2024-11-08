@@ -115,6 +115,7 @@ Checks function_declaration meets BNF requirements
 @post:
  *****************************************************************************************/
 void Parser::function_declaration(){
+    inFunction = true;
     scope++;
     //SymbolTable new_symbol_table;
     new_symbol_table.scope = scope;
@@ -135,11 +136,13 @@ void Parser::function_declaration(){
             throw std::runtime_error("Syntax error on line " + std::to_string(tokenVector[index].getLineNum()) + ": reserved word \"" +
                                      tokenVector[index].getTokenString() + "\" cannot be used for the name of a function.");
         }
+        tokenVector[index].setIsFuncName();
         new_symbol_table.identifier_name = tokenVector[index].getTokenString();
         tempFunctionName = tokenVector[index].getTokenString();
         expect(tokenVector[index].getTokenString());
     }
 
+    //tokenVector[index].setIfFuncName();
     // then a open paren
     expect( "(");
     //may need a loop to handle, multiple instances of parameters being declared.
@@ -162,11 +165,14 @@ void Parser::function_declaration(){
 
     // after the params are added we want to clear our temp vector storing our params.
     tempParamList.clear();
+    //tokenVector[index].setIfFuncName();
     expect( ")");
     expect( "{" );
     // calls compound statement to start the interior of our function block.
     compound_statement();
     expect( "}" );
+    inFunction = false;
+
 }
 
 
@@ -498,12 +504,14 @@ void Parser::user_defined_function(){
     if (tokenVector[index].isIdentifier()) {
         expect( tokenVector[index].getTokenString() );
     }
+    tokenVector[index].setImportant();
     expect("(");
     if (tokenVector[index].isIdentifier()) {
         identifier_and_identifier_array_list();
     } else{
         expression();
     }
+    tokenVector[index].setImportant();
     expect(")");
 
 }
@@ -572,10 +580,13 @@ checks that the follwoing statement is a assignment statement that follows BNF r
 @post:
  *****************************************************************************************/
 void Parser::assignment_statement(){
+    inImportantExp = true;
     expect( tokenVector[index].getTokenString() );
     if (tokenVector[index].isLBracket()){
+        tokenVector[index].setImportant();
         expect("[");
         expect( tokenVector[index].getTokenString() );
+        tokenVector[index].setImportant();
         expect("]");
     }
     expect("=");
@@ -588,6 +599,7 @@ void Parser::assignment_statement(){
         expression();
     }
     expect(";");
+    inImportantExp = false;
 }
 
 
@@ -622,13 +634,14 @@ void Parser::iteration_statement() {
         //std::cout<<"entering increment expression statement for for loop"<<std::endl;
         expression();
         expect(")");
+        inForLoop = false;
         if (tokenVector[index].isLBrace()) {
             block_statement();
         } else {
             statement();
         }
         //set for loop to false, so we handle semicolons normally after this.
-        inForLoop = false;
+      //  inForLoop = false;
     } else if (tokenVector[index].getTokenString() == "while" ){
         expect(tokenVector[index].getTokenString());
         expect("(");
@@ -652,7 +665,7 @@ checks that the follwoing statement is a selection statement that follows BNF ru
 @post: generate if cst statement
  *****************************************************************************************/
 void Parser::selection_statement(){
-
+    inImportantExp = true;
     //first token should be a if statement.
     if (tokenVector[index].getTokenString() == "if"){
         expect(tokenVector[index].getTokenString());
@@ -664,6 +677,7 @@ void Parser::selection_statement(){
     boolean_expression();
     //closed paren
     expect(")");
+    inImportantExp = false;
     // then a block statement
     if (tokenVector[index].isLBrace()) {
         //recurse througho ur block function.
@@ -687,7 +701,6 @@ void Parser::selection_statement(){
             }
         }
     }
-
 }
 
 
@@ -733,10 +746,12 @@ void Parser::expression(){
 
 
         //note: how do we set the data type? has to match the function definition right? maybe search for it in our symbol table?
+        tokenVector[index].setImportant();
         expect("(");
         //set new symbol table object
         //new_symbol_table.identifier_type = tokenVector[index].getTokenString();
         expression();
+        tokenVector[index].setImportant();
         expect(")");
         //need to return symbol here for the function call.
         //symbol_table_list.insertSymbol( new_symbol_table );
@@ -1090,6 +1105,9 @@ bool Parser::numerical_operand(){
         return true;
         //if we find a single quote
     }else if (tokenVector[index].isSingleQuote()){
+        if(inImportantExp){
+            tokenVector[index].setImportant();
+        }
         expect("'");
         if(tokenVector[index].isChar()){
             expect( tokenVector[index].getTokenString() );
@@ -1100,11 +1118,17 @@ bool Parser::numerical_operand(){
         }else{
             //ERROR ERROR ERROR ERROR ERROR ERROR
         }
+        if(inImportantExp){
+            tokenVector[index].setImportant();
+        }
         expect("'");
 
         return true;
         //if we find a double quote
     }else if (tokenVector[index].isDoubleQuote()){
+        if(inImportantExp){
+            tokenVector[index].setImportant();
+        }
         expect("\"");
         if(tokenVector[index].isChar()){
             expect( tokenVector[index].getTokenString() );
@@ -1112,6 +1136,9 @@ bool Parser::numerical_operand(){
             expect( tokenVector[index].getTokenString() );
         }else{
             //ERROR ERROR ERROR ERROR ERROR ERROR
+        }
+        if(inImportantExp){
+            tokenVector[index].setImportant();
         }
         expect("\"");
         return true;
@@ -1194,8 +1221,14 @@ void Parser::identifier_and_identifier_array_list() {
 
         //otherwise if its a open paren then we have a function call
     }else if (tokenVector[index].isLParen()) {
+        if (inImportantExp){
+            tokenVector[index].setImportant();
+        }
         expect("(");
         identifier_list();
+        if (inImportantExp){
+            tokenVector[index].setImportant();
+        }
         expect(")");
 
         //if we see a comma by its self then call identifier list. mostelikely called after identifier list was finished with a function call or array[a]
@@ -1268,6 +1301,9 @@ void Parser::identifier_array_list() {
     //std::cout<<" in identifier_array_list"<<std::endl;
     //std::cout<<"token is: "<<tokenVector[index].getTokenString()<<std::endl;
 
+    if(inImportantExp){
+        tokenVector[index].setImportant();
+    }
     // ok so we found an array call, we expect to be at the open lbracket
     expect( "[" );
 
@@ -1286,6 +1322,9 @@ void Parser::identifier_array_list() {
             new_symbol_table.datatype_array_size = tokenVector[index].getTokenString();
         }
         expect(tokenVector[index].getTokenString());
+    }
+    if(inImportantExp){
+        tokenVector[index].setImportant();
     }
     //then we expect a closing bracket
     expect( "]" );
@@ -1348,8 +1387,14 @@ void Parser::single_quoted_string(){
     if (!tokenVector[index].isSingleQuote()){
         throw std::runtime_error("Expected a single quote, but got '" + tokenVector[index].getTokenString() + "'");
     }
+    if (inImportantExp) {
+        tokenVector[index].setImportant();
+    }
     expect( "\'");
     expect(tokenVector[index].getTokenString());
+    if (inImportantExp) {
+        tokenVector[index].setImportant();
+    }
     expect("\'");
 }
 
@@ -1362,10 +1407,16 @@ void Parser::double_quoted_string(){
     if (!tokenVector[index].isDoubleQuote()){
         throw std::runtime_error("Expected a double quote, but got '" + tokenVector[index].getTokenString() + "'");
     }
+    if (inImportantExp) {
+        tokenVector[index].setImportant();
+    }
     expect( "\"");
     expect(tokenVector[index].getTokenString());
     if (tokenVector[index].isEOF()){
         throw std::runtime_error("Syntax error on line " + std::to_string(tokenVector[index].getLineNum()) + ": unterminated string quote.");
+    }
+    if (inImportantExp) {
+        tokenVector[index].setImportant();
     }
     expect("\"");
 }

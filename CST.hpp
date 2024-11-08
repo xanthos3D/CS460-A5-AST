@@ -22,6 +22,9 @@ public:
     void RemoveElement();
     CSTNode* getRoot() { return root; }
     std::vector<Token> yardAlgorithm (std::vector<Token>& infix);
+    std::vector<Token> yardAlgorithm2 (std::vector<Token>& infix);
+    bool tokenOfInterest(Token check);
+    bool inForLoop = false;
 
 private:
     //object made of one cst node which connects to the other nodes apart of this data structure

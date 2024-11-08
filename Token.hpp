@@ -51,6 +51,9 @@ public:
     bool &isBoolTrue();
     bool &isBoolFalse();
 
+    bool &isImportant();
+    bool &isFunctionName();
+
     //simple setter functions to set a token to a given type.
     void setEndOfFile();
     void setIdentifier(std::string);
@@ -81,6 +84,10 @@ public:
     void setEscChar(std::string);
     void setString(std::string);
 
+    void setImportant();
+    void setIsFuncName();
+
+
     void setBoolE();
     void setBoolNot();
     void setBoolNE();
@@ -92,6 +99,8 @@ public:
     void setBoolOr();
     void setBoolTrue();
     void setBoolFalse();
+
+
 
     //sets the tokenstring
     void setTokenString(std::string);
@@ -105,7 +114,7 @@ public:
 
 private:
     //misc idenfitier types
-    bool _identifier, _doubleQuote,_singleQuote, _semicolon,_comma, _eof,
+    bool _identifier, _doubleQuote,_singleQuote, _semicolon,_comma, _eof, _isImportant, _isFuncName,
     //braces and brackets
     _LParen, _RParen, _LBrace, _RBrace,_LBracket, _RBracket,
     //opperators
