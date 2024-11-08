@@ -78,6 +78,8 @@ private:
     bool inForLoop = false;
     bool inDeclaration = false;
     bool inParamList = false;
+    bool inFunction = false;
+    bool inImportantExp = false;
     //vector passed in on declaration
     std::vector<Token> tokenVector;
     //concrete syntax tree object

@@ -82,9 +82,9 @@ void CST::printTree(){
             std::cout <<std::endl;
             std::cout <<" |"<<std::endl;
             std::cout <<"\\|/";
-            std::cout << "\n" + current->getToken().getTokenString()<< "--> ";
+            std::cout << "\n" + current->getToken().getTokenString()<< " --> ";
         } else {
-            std::cout << current->getToken().getTokenString() << "--> ";
+            std::cout << current->getToken().getTokenString() << " --> ";
         }
         q.pop();
 
@@ -134,12 +134,12 @@ void CST::cstToAst(){
     q.push( root );
 
     //traverse through our queue
-    while ( !q.empty() /*|| !lineByLine.empty()*/) {
+    while ( !q.empty() || !lineByLine.empty()) {
 
         CSTNode* current = q.front();
 
         //checks if its a child, if yes then it drops to a new line
-        if ( current->isChild() ){
+        if ( current->isChild() || (current->getLeft() == nullptr && current->getRight() == nullptr) ){
             //in here we want to process the line we just recieved
             //print out our line to see what it is.
             std::cout<<"line: "<<std::endl;
@@ -203,7 +203,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -219,6 +219,7 @@ void CST::cstToAst(){
 
                 lineByLine.clear();
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "for" ){
+                inForLoop = true;
                 int keepTrack;
                 //loop through to get each foor loop part note, each part goes down as a left child of the previous statement.
 
@@ -251,7 +252,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -284,7 +285,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -312,9 +313,11 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
+
+                inForLoop = true;
 
                 lineByLine.clear();
             }else if(lineByLine.front().isIdentifier() && lineByLine.front().getTokenString() == "while" ){
@@ -346,7 +349,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -381,7 +384,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " -> ";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -416,7 +419,7 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
@@ -451,14 +454,13 @@ void CST::cstToAst(){
 
                 //insert them into our ast and move to next line.
                 for(int i = 0;i < postfix.size();i++) {
-                    std::cout << postfix[i].getTokenString() << "->";
+                    std::cout << postfix[i].getTokenString() << " ->";
                     addSibling(astRoot, postfix[i]);
                 }
 
                 lineByLine.clear();
                 //if we find a brace
             }else if(lineByLine.front().isLBrace()){
-
                 //insert "BEGIN BLOCK" token, and progress to next line.
                 std::cout<<"found BEGIN BLOCK with string: "<<lineByLine.front().getTokenString() <<std::endl;
                 Token token(lineByLine.front().getLineNum(), lineByLine.front().getCharPos());
@@ -580,11 +582,15 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
 
     //foreach token in token list
     for(int i = 0; i < infix.size(); i++){
+        if ((infix[i].isDoubleQuote() || infix[i].isSingleQuote() || infix[i].isLParen()
+            || infix[i].isRParen() || infix[i].isLBracket() || infix[i].isRBracket()) && infix[i].isImportant()){
+            postfix.push_back(infix[i]);
+        }
         if (infix[i].isAssignmentOperator()){
             isAssignment = true;
             assignmentOp = infix[i];
-        }else if ((infix[i].isInt())    || (infix[i].isIdentifier()) || (infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||
-            (infix[i].isString()) || (infix[i].isLBracket())   || (infix[i].isRBracket())){
+        }else if ((infix[i].isInt())    || (infix[i].isIdentifier()) || /*(infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||*/
+            (infix[i].isString())/* || (infix[i].isLBracket())   || (infix[i].isRBracket())*/){
             //display token
             std::cout<<"here!"<<std::endl;
             infix[i].print();
@@ -599,7 +605,6 @@ std::vector<Token> CST::yardAlgorithm (std::vector<Token>& infix){
             }else{
 
                 if (infix[i].isRParen()){
-
                     finished = false;
                     while (!finished){
                         //top of stack token == LEFT PARENTHESIS
@@ -833,292 +838,12 @@ bool CST::tokenOfInterest (Token check){
        check.isBoolLT()     ||      check.isBoolLTE()    ||
        check.isBoolAnd()    ||      check.isBoolOr()     ||
        check.isBoolFalse()  ||      check.isBoolTrue()   ||
-       check.isString()     ||
+       check.isString()     ||      check.isLBracket()   ||
+       check.isRBracket()   ||      check.isSingleQuote()||
+       check.isDoubleQuote()||
        check.isAssignmentOperator()
        ){
         return true;
     }
     return false;
 }
-
-///** **************************************************************************************
-////function to take a infix expression and conver it to postfix
-//@pre: takes a vector of tokens in infix
-//@post: returns a vector with token in infix
-// *****************************************************************************************/
-//std::vector<Token> CST::yardAlgorithm2 (std::vector<Token>& infix){
-//
-//    std::vector<Token> postfix;
-//    std::stack<Token> stack;
-//    Token assignmentOp(0,0);
-//    bool isAssignment = false;
-//    bool finished = false;
-//
-//    //foreach token in token list
-//    for(int i = 0; i < infix.size(); i++){
-//        if (infix[i].isAssignmentOperator()){
-//            isAssignment = true;
-//            assignmentOp = infix[i];
-//        }else if ((infix[i].isInt())    || (infix[i].isIdentifier()) || (infix[i].isSingleQuote()) || (infix[i].isDoubleQuote()) ||
-//                  (infix[i].isString()) || (infix[i].isLBracket())   || (infix[i].isRBracket())){
-//            //display token
-//            std::cout<<"here!"<<std::endl;
-//            infix[i].print();
-//            postfix.push_back(infix[i]);
-//
-//        }else{
-//            if (infix[i].isLParen())
-//            {
-//                //push token on stack
-//                stack.push(infix[i]);
-//
-//            }else{
-//
-//                if (infix[i].isRParen()){
-//
-//                    while (!stack.top().isLParen()){
-//                        //display token at top of stack
-//                        stack.top().print();
-//                        postfix.push_back(stack.top());
-//                        //pop stack
-//                        stack.pop();
-//
-//                    }
-//                    stack.pop();
-//                }else{
-//                    if ((infix[i].isPlus())    || (infix[i].isMinus())   || (infix[i].isAsterisk()) ||
-//                        (infix[i].isDivide())  || (infix[i].isModulo())  || (infix[i].isAssignmentOperator())){
-//                        if (stack.empty()){
-//                            //push token on stack
-//                            stack.push(infix[i]);
-//                        }else{
-//                            if (infix[i].isPlus() || infix[i].isMinus())
-//                            {
-//                                finished = false;
-//                                while (!finished)
-//                                {
-//                                    if (!stack.empty())
-//                                    {
-//                                        if (stack.top().isPlus() || stack.top().isMinus() ||
-//                                            stack.top().isAsterisk() || stack.top().isDivide() ||
-//                                            stack.top().isModulo())
-//                                        {
-//                                            //display token at top of stack
-//                                            stack.top().print();
-//                                            postfix.push_back(stack.top());
-//                                            //pop stack
-//                                            stack.pop();
-//                                        }
-//                                        else
-//                                        {
-//                                            stack.push(infix[i]);
-//                                            finished = true;
-//                                        }
-//                                    }
-//                                    else
-//                                    {
-//                                        stack.push(infix[i]);
-//                                        finished = true;
-//                                    }
-//                                }
-//                            }
-//                            else
-//                            {
-//                                if (infix[i].isAsterisk() || infix[i].isDivide() || infix[i].isModulo())
-//                                {
-//                                    jkjkjkjjkjk
-//                                }
-//                            }
-//                            //top of stack token == LEFT PARENTHESIS
-//                            if (infix[i].isLParen()){
-//                                stack.push(infix[i]);
-//                            }else{
-//                                //token == BOOLEAN_NOT
-//                                if (infix[i].isBoolNot())
-//                                {
-//                                    finished = false;
-//
-//                                    while (!finished){
-//                                        if (!stack.empty()){
-//                                            //top of stack token == BOOLEAN NOT
-//                                            if (stack.top().isBoolNot()){
-//                                                //display token at top of stack
-//                                                stack.top().print();
-//                                                postfix.push_back(stack.top());
-//                                                //pop stack
-//                                                stack.pop();
-//                                            }else{
-//                                                //push token on stack
-//                                                stack.push(infix[i]);
-//                                                finished = true;
-//                                            }
-//                                        }else{
-//                                            //push token on stack
-//                                            finished = true;
-//                                        }
-//                                    }
-//                                }else{
-//                                    if ((infix[i].isAsterisk()) || (infix[i].isDivide()) || (infix[i].isModulo()) || (infix[i].isAssignmentOperator()) ){
-//                                        finished = false;
-//                                        while (!finished){
-//                                            if (!stack.empty()){
-//                                                if ((stack.top().isBoolNot())  || (stack.top().isAsterisk()) || (stack.top().isDivide()) || (stack.top().isModulo())|| (stack.top().isAssignmentOperator())){
-//                                                    //display token at top of stack
-//                                                    stack.top().print();
-//                                                    postfix.push_back(stack.top());
-//                                                    stack.pop();
-//                                                }else{
-//                                                    //push token on stack
-//                                                    stack.push(infix[i]);
-//                                                    finished = true;
-//                                                }
-//                                            }else{
-//                                                //push token on stack
-//                                                stack.push(infix[i]);
-//                                                finished = true;
-//                                            }
-//                                        }
-//                                    }else{
-//                                        if ((infix[i].isPlus()) || (infix[i].isMinus())){
-//                                            finished = false;
-//                                            while (!finished){
-//                                                if (!stack.empty())
-//                                                {
-//                                                    if ((stack.top().isBoolNot()) || (stack.top().isAsterisk()) ||
-//                                                        (stack.top().isDivide())  || (stack.top().isModulo())   ||
-//                                                        (stack.top().isPlus())    || (stack.top().isMinus())    || (stack.top().isAssignmentOperator()))
-//                                                    {
-//                                                        //display token at top of stack
-//                                                        stack.top().print();
-//                                                        postfix.push_back(stack.top());
-//                                                        stack.pop();
-//                                                    }else{
-//                                                        //push token on stack
-//                                                        stack.push(infix[i]);
-//                                                        finished = true;
-//                                                    }
-//                                                }else{
-//                                                    //push token on stack
-//                                                    stack.push(infix[i]);
-//                                                    finished = true;
-//                                                }
-//                                            }
-//                                        }else{
-//                                            if ((infix[i].isBoolE())   || (infix[i].isBoolNE()) || (infix[i].isBoolLT()) || (infix[i].isBoolGT()) ||
-//                                                (infix[i].isBoolLTE()) || (infix[i].isBoolGTE()))
-//                                            {
-//                                                finished = false;
-//                                                while (!finished){
-//                                                    if (!stack.empty())
-//                                                    {
-//                                                        if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
-//                                                            (stack.top().isDivide())             || (stack.top().isModulo())   ||
-//                                                            (stack.top().isPlus())               || (stack.top().isMinus())    ||
-//                                                            (stack.top().isAssignmentOperator()) ||
-//                                                            (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
-//                                                            (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
-//                                                            (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
-//                                                            (stack.top().isBoolNE()))
-//                                                        {
-//                                                            //display token at top of stack
-//                                                            stack.top().print();
-//                                                            postfix.push_back(stack.top());
-//                                                            stack.pop();
-//                                                        }else{
-//                                                            //push token on stack
-//                                                            stack.push(infix[i]);
-//                                                            finished = true;
-//                                                        }
-//                                                    }else{
-//                                                        //push token on stack
-//                                                        stack.push(infix[i]);
-//                                                        finished = true;
-//                                                    }
-//                                                }
-//                                            }else{
-//                                                if (infix[i].isBoolAnd()){
-//                                                    finished = false;
-//                                                    while (!finished){
-//                                                        if (!stack.empty()){
-//                                                            if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
-//                                                                (stack.top().isDivide())             || (stack.top().isModulo())   ||
-//                                                                (stack.top().isPlus())               || (stack.top().isMinus())    ||
-//                                                                (stack.top().isAssignmentOperator()) ||
-//                                                                (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
-//                                                                (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
-//                                                                (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
-//                                                                (stack.top().isBoolNE()))
-//                                                            {
-//                                                                //display token at top of stack
-//                                                                stack.top().print();
-//                                                                postfix.push_back(stack.top());
-//                                                                stack.pop();
-//                                                            }else{
-//                                                                //push token on stack
-//                                                                stack.push(infix[i]);
-//                                                                finished = true;
-//                                                            }
-//                                                        }else{
-//                                                            //push token on stack
-//                                                            stack.push(infix[i]);
-//                                                            finished = true;
-//                                                        }
-//                                                    }
-//                                                }else{
-//                                                    if (infix[i].isBoolOr())
-//                                                    {
-//                                                        finished = false;
-//                                                        while (!finished)
-//                                                        {
-//                                                            if (!stack.empty())
-//                                                            {
-//                                                                if ((stack.top().isBoolNot())            || (stack.top().isAsterisk()) ||
-//                                                                    (stack.top().isDivide())             || (stack.top().isModulo())   ||
-//                                                                    (stack.top().isPlus())               || (stack.top().isMinus())    ||
-//                                                                    (stack.top().isAssignmentOperator()) ||
-//                                                                    (stack.top().isBoolE())              || (stack.top().isBoolNE())   ||
-//                                                                    (stack.top().isBoolLT())             || (stack.top().isBoolGT())   ||
-//                                                                    (stack.top().isBoolLTE())            || (stack.top().isBoolGTE())  ||
-//                                                                    (stack.top().isBoolNE()))
-//                                                                {
-//                                                                    //display token at top of stack
-//                                                                    stack.top().print();
-//                                                                    postfix.push_back(stack.top());
-//                                                                    stack.pop();
-//                                                                }else{
-//                                                                    //push token on stack
-//                                                                    stack.push(infix[i]);
-//                                                                    finished = true;
-//                                                                }
-//                                                            }else{
-//                                                                //push token on stack
-//                                                                stack.push(infix[i]);
-//                                                                finished = true;
-//                                                            }
-//                                                        }
-//                                                    }
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    while (!stack.empty()){
-//        //display token at top of stack
-//        stack.top().print();
-//        postfix.push_back(stack.top());
-//        stack.pop();
-//    }
-//
-//    if (isAssignment)
-//        postfix.push_back(assignmentOp);
-//
-//    return postfix;
-//}

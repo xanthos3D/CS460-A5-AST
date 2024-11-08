@@ -11,7 +11,7 @@ Token::Token(int line, int pos)
         : _lineNumber(line), _charPos(pos),
         //Misc
           _identifier(false), _doubleQuote(false), _singleQuote(false),
-          _semicolon(false), _comma(false), _eof(false),
+          _semicolon(false), _comma(false), _eof(false), _isImportant(false), _isFuncName(false),
         //Brackets & Parenthesis
           _LParen(false), _RParen(false), _LBrace(false), _RBrace(false),
           _LBracket(false), _RBracket(false),
@@ -69,6 +69,9 @@ bool& Token::isBoolOr(){return _boolOr;}
 bool& Token::isBoolTrue(){return _boolTrue;}
 bool& Token::isBoolFalse(){return _boolFalse;}
 
+bool& Token::isImportant(){return _isImportant;}
+bool& Token::isFunctionName(){return _isFuncName;}
+
 
 
 //create setter functions
@@ -96,6 +99,9 @@ void Token::setMinus(){ _minus = true; setTokenString("-");}
 void Token::setAsterisk(){ _asterisk = true; setTokenString("*");}
 void Token::setDivide(){ _divide = true; setTokenString("/");}
 void Token::setCarot(){ _caret = true;setTokenString("^"); }
+
+void Token::setImportant(){_isImportant = true;}
+void Token::setIsFuncName(){_isFuncName = true;}
 
 void Token::setInt(std::string input) {
     _int = true;
