@@ -2,7 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "CS460_A3_RDP"
+			"path" : "CS460_A3_RDP.exe"
+		},
+		{
+			"path" : "CS460_A3_RDP.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -35,7 +38,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-g -std=gnu++11 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -mmacosx-version-min=14.5 -fcolor-diagnostics"
+					"fragment" : "-g -std=gnu++11 -fdiagnostics-color=always"
 				}
 			],
 			"language" : "CXX",
@@ -70,12 +73,16 @@
 			{
 				"fragment" : "",
 				"role" : "flags"
+			},
+			{
+				"fragment" : "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32",
+				"role" : "libraries"
 			}
 		],
 		"language" : "CXX"
 	},
 	"name" : "CS460_A3_RDP",
-	"nameOnDisk" : "CS460_A3_RDP",
+	"nameOnDisk" : "CS460_A3_RDP.exe",
 	"paths" : 
 	{
 		"build" : ".",

@@ -1,14 +1,14 @@
-// ***************************************************
-// * CS460: Programming Assignment 5: Test Program 2 *
-// ***************************************************
+                                                      
+                                                      
+                                                      
 
 
 
-// ***********************************************************************************
-// * Hex digit converts a single character into its non-negative integer equivalent. *
-// *                                                                                 *
-// * Hex digit returns -1 upon error                                                 *
-// ***********************************************************************************
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
+                                                                                      
 function int hexdigit2int (char hex_digit)
 {
   int i, digit;
@@ -58,4 +58,5 @@ procedure main (void)
     printf ("Hex: 0x%s is %d decimal\n", hexnum, number);
   }
 }
+
 
